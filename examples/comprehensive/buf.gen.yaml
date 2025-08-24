@@ -16,5 +16,3 @@ plugins:
     opt:
       - generate_extensions=true
       - file_suffix=_resources.rs
-deps:
-  - buf.build/googleapis/googleapis
