@@ -67,14 +67,14 @@ impl ResourceRenderer {
         Ok(quote! {
             #struct_def
             #impl_new
-            #impl_accessors  
+            #impl_accessors
             #impl_traits
         })
     }
 
     fn render_struct(&self, type_ident: &Ident, _variables: &[String]) -> TokenStream {
-        let doc = format!("A resource name for this resource type.");
-        
+        let doc = "A resource name for this resource type.".to_string();
+
         quote! {
             #[doc = #doc]
             #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -127,8 +127,8 @@ impl ResourceRenderer {
             .enumerate()
             .map(|(i, var)| {
                 let method_name = format_ident!("{}", var.to_snake_case());
-                let doc = format!("Get the {} component of this resource name.", var);
-                
+                let doc = format!("Get the {var} component of this resource name.");
+
                 quote! {
                     #[doc = #doc]
                     pub fn #method_name(&self) -> &str {
@@ -203,7 +203,7 @@ impl ResourceRenderer {
                             expected_pattern: #pattern_str.to_string(),
                         });
                     }
-                    
+
                     Ok(Self {
                         inner: s.to_string(),
                     })
@@ -220,7 +220,7 @@ impl ResourceRenderer {
                 fn pattern() -> &'static str {
                     #pattern_str
                 }
-                
+
                 fn as_str(&self) -> &str {
                     &self.inner
                 }
@@ -252,37 +252,46 @@ impl ResourceRenderer {
                 .iter()
                 .filter_map(|r| {
                     let resource_type = r.resource_type.as_ref()?;
-                    let _resource = resources.iter().find(|res| &res.type_name == resource_type)?;
+                    let _resource = resources
+                        .iter()
+                        .find(|res| &res.type_name == resource_type)?;
                     let type_name = self.type_name_from_resource_type(resource_type);
                     let type_ident = format_ident!("{}", type_name);
                     let field_name = format_ident!("{}", r.field_name.to_snake_case());
                     let getter_name = format_ident!("{}_typed", r.field_name.to_snake_case());
                     let setter_name = format_ident!("set_{}_typed", r.field_name.to_snake_case());
 
-                    Some((quote! {
-                        /// Get the typed resource name for this field.
-                        fn #getter_name(&self) -> Result<#type_ident, ParseError>;
+                    Some((
+                        quote! {
+                            /// Get the typed resource name for this field.
+                            fn #getter_name(&self) -> Result<#type_ident, ParseError>;
 
-                        /// Set this field from a typed resource name.
-                        fn #setter_name(&mut self, value: #type_ident);
-                    }, quote! {
-                        /// Get the typed resource name for this field.
-                        fn #getter_name(&self) -> Result<#type_ident, ParseError> {
-                            #type_ident::try_from(self.#field_name.clone())
-                        }
+                            /// Set this field from a typed resource name.
+                            fn #setter_name(&mut self, value: #type_ident);
+                        },
+                        quote! {
+                            /// Get the typed resource name for this field.
+                            fn #getter_name(&self) -> Result<#type_ident, ParseError> {
+                                #type_ident::try_from(self.#field_name.clone())
+                            }
 
-                        /// Set this field from a typed resource name.
-                        fn #setter_name(&mut self, value: #type_ident) {
-                            self.#field_name = value.into();
-                        }
-                    }))
+                            /// Set this field from a typed resource name.
+                            fn #setter_name(&mut self, value: #type_ident) {
+                                self.#field_name = value.into();
+                            }
+                        },
+                    ))
                 })
                 .collect();
 
             if !methods.is_empty() {
-                let trait_methods: Vec<_> = methods.iter().map(|(trait_method, _)| trait_method).collect();
-                let impl_methods: Vec<_> = methods.iter().map(|(_, impl_method)| impl_method).collect();
-                
+                let trait_methods: Vec<_> = methods
+                    .iter()
+                    .map(|(trait_method, _)| trait_method)
+                    .collect();
+                let impl_methods: Vec<_> =
+                    methods.iter().map(|(_, impl_method)| impl_method).collect();
+
                 tokens.extend(quote! {
                     /// Extension trait for accessing typed resource names.
                     pub trait #trait_name {
@@ -314,7 +323,10 @@ impl ResourceRenderer {
     /// Convert a resource type to a Rust type name
     fn type_name_from_resource_type(&self, resource_type: &str) -> String {
         // Extract the last part after the last '/'
-        let last_part = resource_type.split('/').last().unwrap_or(resource_type);
+        let last_part = resource_type
+            .split('/')
+            .next_back()
+            .unwrap_or(resource_type);
         format!("{}Name", last_part.to_pascal_case())
     }
 

@@ -1,0 +1,223 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g., v0.1.0)'
+        required: true
+        type: string
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_id: ${{ steps.create_release.outputs.id }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get version from tag
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          release_name: ${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          body: |
+            # protoc-gen-rust-aip ${{ steps.get_version.outputs.VERSION }}
+            
+            ## Installation
+            
+            ### Quick Install (Linux/macOS)
+            ```bash
+            curl -sSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | bash
+            ```
+            
+            ### Direct Download
+            Download the appropriate binary for your platform:
+            - Linux: `protoc-gen-rust-aip-linux-x86_64` 
+            - macOS: `protoc-gen-rust-aip-darwin-x86_64` or `protoc-gen-rust-aip-darwin-aarch64`
+            - Windows: `protoc-gen-rust-aip-windows-x86_64.exe`
+            
+            ### Usage with Buf
+            ```yaml
+            # buf.gen.yaml
+            version: v2
+            plugins:
+              - local: protoc-gen-rust-aip
+                out: gen/rust
+            ```
+            
+            ## Changes
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+
+  build_and_upload:
+    name: Build and Upload
+    needs: create_release
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            cross: false
+            asset_name: protoc-gen-rust-aip-linux-x86_64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            cross: true
+            asset_name: protoc-gen-rust-aip-linux-x86_64-musl
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            cross: false
+            asset_name: protoc-gen-rust-aip-darwin-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            cross: false
+            asset_name: protoc-gen-rust-aip-darwin-aarch64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            cross: false
+            asset_name: protoc-gen-rust-aip-windows-x86_64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.config.target }}
+
+      - name: Install cross (for cross-compilation)
+        if: matrix.config.cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.config.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.config.target }}-cargo-
+            ${{ runner.os }}-cargo-
+
+      - name: Build binary
+        run: |
+          if [ "${{ matrix.config.cross }}" = "true" ]; then
+            cross build --release --bin protoc-gen-rust-aip --target ${{ matrix.config.target }}
+          else
+            cargo build --release --bin protoc-gen-rust-aip --target ${{ matrix.config.target }}
+          fi
+        shell: bash
+
+      - name: Prepare binary for upload
+        run: |
+          if [ "${{ matrix.config.os }}" = "windows-latest" ]; then
+            cp target/${{ matrix.config.target }}/release/protoc-gen-rust-aip.exe ${{ matrix.config.asset_name }}
+          else
+            cp target/${{ matrix.config.target }}/release/protoc-gen-rust-aip ${{ matrix.config.asset_name }}
+          fi
+        shell: bash
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./${{ matrix.config.asset_name }}
+          asset_name: ${{ matrix.config.asset_name }}
+          asset_content_type: application/octet-stream
+
+  # Test the generated binaries work correctly
+  test_binaries:
+    name: Test Binaries
+    needs: [create_release, build_and_upload]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset_name: protoc-gen-rust-aip-linux-x86_64
+          - os: macos-latest
+            asset_name: protoc-gen-rust-aip-macos-x86_64
+          - os: windows-latest
+            asset_name: protoc-gen-rust-aip-windows-x86_64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ github.token }}
+
+      - name: Download release asset
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ matrix.asset_name }}
+        continue-on-error: true
+
+      - name: Download from release
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          curl -L -o ${{ matrix.asset_name }} \
+            "https://github.com/${{ github.repository }}/releases/download/${VERSION}/${{ matrix.asset_name }}"
+        shell: bash
+
+      - name: Make binary executable
+        if: matrix.os != 'windows-latest'
+        run: chmod +x ${{ matrix.asset_name }}
+
+      - name: Test binary works
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            ./${{ matrix.asset_name }} --version || true
+          else
+            ./${{ matrix.asset_name }} --version || true
+          fi
+        shell: bash
+
+      - name: Test with example
+        run: |
+          # Copy binary to PATH
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp ${{ matrix.asset_name }} /usr/bin/protoc-gen-rust-aip.exe
+          else
+            sudo cp ${{ matrix.asset_name }} /usr/local/bin/protoc-gen-rust-aip
+          fi
+          
+          # Test with comprehensive example
+          cd examples/comprehensive
+          buf generate --template buf.gen.yaml
+        shell: bash

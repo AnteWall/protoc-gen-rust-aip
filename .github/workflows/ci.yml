@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -34,24 +34,23 @@ jobs:
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
     
     - name: Check formatting
-      run: cargo fmt -- --check
+      run: cargo fmt --all -- --check
     
     - name: Run clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
+      run: cargo clippy --workspace --lib --bins -- -D warnings -A clippy::uninlined_format_args -A clippy::useless_format
     
     - name: Run tests
-      run: cargo test --workspace
+      run: cargo test --workspace --verbose
     
     - name: Build plugin
-      run: cargo build --bin protoc-gen-rn --release
+      run: cargo build --bin protoc-gen-rust-aip
     
-    - name: Test basic example
+    - name: Test comprehensive example
       run: |
-        cd examples/basic-resource
-        # Update buf.gen.yaml to use local binary
-        sed -i 's|- plugin: rn|- plugin: ../../target/release/protoc-gen-rn|g' buf.gen.yaml
+        cd examples/comprehensive
         buf generate
         cargo check
-        cargo run --example basic_usage

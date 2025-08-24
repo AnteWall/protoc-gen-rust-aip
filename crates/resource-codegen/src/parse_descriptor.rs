@@ -10,7 +10,7 @@ pub struct ParsedResource {
     pub type_name: String,
     /// The patterns for this resource (e.g., "projects/{project}/topics/{topic}")
     pub patterns: Vec<ResourcePattern>,
-    /// The singular form (e.g., "topic") 
+    /// The singular form (e.g., "topic")
     pub singular: Option<String>,
     /// The plural form (e.g., "topics")
     pub plural: Option<String>,
@@ -77,7 +77,11 @@ impl ResourceParser {
         parent_prefix: &str,
         result: &mut ParsedFileResources,
     ) -> Result<()> {
-        let message_name = format!("{}{}", parent_prefix, message.name.as_ref().unwrap_or(&String::new()));
+        let message_name = format!(
+            "{}{}",
+            parent_prefix,
+            message.name.as_ref().unwrap_or(&String::new())
+        );
 
         // Check for google.api.resource annotation
         if let Some(resource) = self.parse_resource_annotation(message, file_name, &message_name)? {
@@ -86,14 +90,16 @@ impl ResourceParser {
 
         // Parse fields for resource references
         for field in &message.field {
-            if let Some(reference) = self.parse_resource_reference_annotation(field, file_name, &message_name)? {
+            if let Some(reference) =
+                self.parse_resource_reference_annotation(field, file_name, &message_name)?
+            {
                 result.references.push(reference);
             }
         }
 
         // Parse nested messages
         for nested in &message.nested_type {
-            self.parse_message(nested, file_name, &format!("{}.", message_name), result)?;
+            self.parse_message(nested, file_name, &format!("{message_name}."), result)?;
         }
 
         Ok(())
@@ -111,68 +117,122 @@ impl ResourceParser {
         }
 
         let options = options.unwrap();
-        
-        // For now, check if there are any uninterpreted options at all
-        // In a real implementation, you would properly decode google.api.resource
-        if !options.uninterpreted_option.is_empty() {
-            // Generate a resource based on message name
-            return Ok(Some(self.create_resource_from_message_name(message_name, file_name)));
+
+        // Look for google.api.resource extension (field number 1053)
+        // This is the proper way to detect resource annotations
+        for uninterpreted_option in &options.uninterpreted_option {
+            if let Some(resource) = self.parse_google_api_resource_option(
+                uninterpreted_option,
+                file_name,
+                message_name,
+            )? {
+                return Ok(Some(resource));
+            }
         }
 
         Ok(None)
     }
 
-    fn create_resource_from_message_name(
+    fn parse_google_api_resource_option(
         &self,
-        message_name: &str,
+        option: &prost_types::UninterpretedOption,
         file_name: &str,
-    ) -> ParsedResource {
-        // Extract the base name without any package prefix
-        let base_name = message_name.split('.').last().unwrap_or(message_name);
-        let lower_name = base_name.to_lowercase();
-        
-        // Create sensible defaults based on the message name
-        let type_name = format!("example.com/{}", base_name);
-        let singular = lower_name.clone();
-        let plural = if lower_name.ends_with('s') {
-            format!("{}es", lower_name)
-        } else {
-            format!("{}s", lower_name)
-        };
-        
-        // Generate a reasonable pattern based on the message name
-        let pattern = match base_name {
-            // Special cases for common Google Cloud resource patterns
-            "Project" => "projects/{project}".to_string(),
-            "Topic" => "projects/{project}/topics/{topic}".to_string(),
-            "Bucket" => "projects/{project}/buckets/{bucket}".to_string(),
-            "Object" => "projects/{project}/buckets/{bucket}/objects/{object}".to_string(),
-            "User" => "users/{user_id}".to_string(),
-            "Document" => "users/{user_id}/documents/{document_id}".to_string(),
-            "Database" => "projects/{project}/instances/{instance}/databases/{database}".to_string(),
-            "Instance" => "projects/{project}/zones/{zone}/instances/{instance}".to_string(),
-            // Default pattern for other messages
-            _ => format!("{}s/{{{}_id}}", plural, lower_name),
-        };
+        message_name: &str,
+    ) -> Result<Option<ParsedResource>> {
+        // Check if this is a google.api.resource option by examining the name parts
+        // For now, we'll use a simplified check - in a real implementation this would
+        // properly decode the option field number (1053 for google.api.resource)
+        let is_resource_option = !option.name.is_empty();
 
-        ParsedResource {
+        if !is_resource_option {
+            return Ok(None);
+        }
+
+        // Parse the actual resource descriptor from the option value
+        // The option value contains a serialized google.api.ResourceDescriptor
+        if let Some(aggregate_value) = &option.aggregate_value {
+            return self.parse_resource_descriptor_from_aggregate(
+                aggregate_value,
+                file_name,
+                message_name,
+            );
+        }
+
+        // If there's no aggregate value, we can't parse the resource
+        Ok(None)
+    }
+
+    fn parse_resource_descriptor_from_aggregate(
+        &self,
+        aggregate_value: &str,
+        file_name: &str,
+        message_name: &str,
+    ) -> Result<Option<ParsedResource>> {
+        // Parse the protobuf text format for ResourceDescriptor
+        // Format: type: "domain/Type" pattern: "collection/{id}" singular: "name" plural: "names"
+
+        let mut type_name: Option<String> = None;
+        let mut patterns: Vec<String> = Vec::new();
+        let mut singular: Option<String> = None;
+        let mut plural: Option<String> = None;
+        let mut history: Vec<String> = Vec::new();
+
+        // Simple text format parser for the aggregate value
+        for line in aggregate_value.lines() {
+            let line = line.trim();
+
+            if let Some(value) = self.extract_quoted_value(line, "type:") {
+                type_name = Some(value);
+            } else if let Some(value) = self.extract_quoted_value(line, "pattern:") {
+                patterns.push(value);
+            } else if let Some(value) = self.extract_quoted_value(line, "singular:") {
+                singular = Some(value);
+            } else if let Some(value) = self.extract_quoted_value(line, "plural:") {
+                plural = Some(value);
+            } else if let Some(value) = self.extract_quoted_value(line, "history:") {
+                history.push(value);
+            }
+        }
+
+        // Validate that we have the required fields
+        let type_name = type_name
+            .ok_or_else(|| anyhow::anyhow!("Resource annotation missing required 'type' field"))?;
+
+        if patterns.is_empty() {
+            return Err(anyhow::anyhow!(
+                "Resource annotation missing required 'pattern' field"
+            ));
+        }
+
+        // Parse patterns into ResourcePattern structs
+        let parsed_patterns: Result<Vec<_>> =
+            patterns.iter().map(|p| self.parse_pattern(p)).collect();
+
+        Ok(Some(ParsedResource {
             type_name,
-            patterns: vec![self.parse_pattern(&pattern).unwrap_or_else(|_| {
-                // Fallback to a simple pattern if parsing fails
-                ResourcePattern {
-                    pattern: format!("{}s/{{{}_id}}", plural, lower_name),
-                    components: vec![
-                        ResourcePatternComponent::Literal(format!("{}s/", plural)),
-                        ResourcePatternComponent::Variable(format!("{}_id", lower_name)),
-                    ],
-                }
-            })],
-            singular: Some(singular),
-            plural: Some(plural),
-            history: vec![],
+            patterns: parsed_patterns?,
+            singular,
+            plural,
+            history,
             source_file: file_name.to_string(),
             message_name: message_name.to_string(),
+        }))
+    }
+
+    fn extract_quoted_value(&self, line: &str, prefix: &str) -> Option<String> {
+        if line.starts_with(prefix) {
+            let value_part = line.strip_prefix(prefix)?.trim();
+            // Remove quotes if present (both single and double quotes)
+            if (value_part.starts_with('"') && value_part.ends_with('"'))
+                || (value_part.starts_with('\'') && value_part.ends_with('\''))
+            {
+                return Some(value_part[1..value_part.len() - 1].to_string());
+            } else {
+                // Handle unquoted values
+                return Some(value_part.to_string());
+            }
         }
+        None
     }
 
     fn parse_resource_reference_annotation(
@@ -188,50 +248,93 @@ impl ResourceParser {
 
         let empty_string = String::new();
         let field_name = field.name.as_ref().unwrap_or(&empty_string);
-        
-        // Only process string fields with options
-        if field.r#type() == prost_types::field_descriptor_proto::Type::String && !options.unwrap().uninterpreted_option.is_empty() {
-            // Generate resource reference based on field name pattern
-            let resource_type = self.infer_resource_type_from_field(field_name, message_name);
-            
-            if let Some(resource_type) = resource_type {
-                return Ok(Some(ParsedResourceReference {
-                    resource_type: Some(resource_type),
-                    child_type: None,
-                    field_name: field_name.clone(),
-                    containing_message: message_name.to_string(),
-                    source_file: file_name.to_string(),
-                }));
+
+        // Only process string fields that have options
+        if field.r#type() != prost_types::field_descriptor_proto::Type::String {
+            return Ok(None);
+        }
+
+        let options = options.unwrap();
+
+        // Look for google.api.resource_reference extension
+        for uninterpreted_option in &options.uninterpreted_option {
+            if let Some(reference) = self.parse_google_api_resource_reference_option(
+                uninterpreted_option,
+                field_name,
+                message_name,
+                file_name,
+            )? {
+                return Ok(Some(reference));
             }
         }
 
         Ok(None)
     }
 
-    fn infer_resource_type_from_field(
+    fn parse_google_api_resource_reference_option(
         &self,
+        option: &prost_types::UninterpretedOption,
         field_name: &str,
         message_name: &str,
-    ) -> Option<String> {
-        match field_name {
-            "name" => {
-                // If the field is named "name", infer resource type from containing message
-                Some(format!("example.com/{}", message_name))
-            }
-            "project" => Some("cloudresourcemanager.googleapis.com/Project".to_string()),
-            "bucket" | "bucket_name" => Some("storage.googleapis.com/Bucket".to_string()),
-            "object_name" => Some("storage.googleapis.com/Object".to_string()),
-            "owner" => Some("example.com/User".to_string()),
-            "parent" => {
-                // Infer parent resource type based on message name
-                match message_name {
-                    name if name.contains("Document") => Some("example.com/User".to_string()),
-                    name if name.contains("Database") => Some("compute.googleapis.com/Instance".to_string()),
-                    _ => None,
-                }
-            }
-            _ => None,
+        file_name: &str,
+    ) -> Result<Option<ParsedResourceReference>> {
+        // Check if this is a google.api.resource_reference option
+        // For now, we'll use a simplified check - in a real implementation this would
+        // properly decode the option field number
+        let is_resource_reference_option = !option.name.is_empty();
+
+        if !is_resource_reference_option {
+            return Ok(None);
         }
+
+        // Parse the resource reference from the aggregate value
+        if let Some(aggregate_value) = &option.aggregate_value {
+            return self.parse_resource_reference_from_aggregate(
+                aggregate_value,
+                field_name,
+                message_name,
+                file_name,
+            );
+        }
+
+        Ok(None)
+    }
+
+    fn parse_resource_reference_from_aggregate(
+        &self,
+        aggregate_value: &str,
+        field_name: &str,
+        message_name: &str,
+        file_name: &str,
+    ) -> Result<Option<ParsedResourceReference>> {
+        // Parse the resource reference from protobuf text format
+        // Format: type: "domain/Type" or child_type: "domain/ChildType"
+
+        let mut resource_type: Option<String> = None;
+        let mut child_type: Option<String> = None;
+
+        for line in aggregate_value.lines() {
+            let line = line.trim();
+
+            if let Some(value) = self.extract_quoted_value(line, "type:") {
+                resource_type = Some(value);
+            } else if let Some(value) = self.extract_quoted_value(line, "child_type:") {
+                child_type = Some(value);
+            }
+        }
+
+        // At least one of resource_type or child_type must be specified
+        if resource_type.is_none() && child_type.is_none() {
+            return Ok(None);
+        }
+
+        Ok(Some(ParsedResourceReference {
+            resource_type,
+            child_type,
+            field_name: field_name.to_string(),
+            containing_message: message_name.to_string(),
+            source_file: file_name.to_string(),
+        }))
     }
 
     fn parse_pattern(&self, pattern: &str) -> Result<ResourcePattern> {
@@ -283,16 +386,18 @@ mod tests {
     #[test]
     fn test_parse_pattern() {
         let parser = ResourceParser::new();
-        let pattern = parser.parse_pattern("projects/{project}/topics/{topic}").unwrap();
-        
+        let pattern = parser
+            .parse_pattern("projects/{project}/topics/{topic}")
+            .unwrap();
+
         assert_eq!(pattern.pattern, "projects/{project}/topics/{topic}");
         assert_eq!(pattern.components.len(), 4);
-        
+
         match &pattern.components[0] {
             ResourcePatternComponent::Literal(s) => assert_eq!(s, "projects/"),
             _ => panic!("Expected literal"),
         }
-        
+
         match &pattern.components[1] {
             ResourcePatternComponent::Variable(s) => assert_eq!(s, "project"),
             _ => panic!("Expected variable"),
@@ -303,7 +408,7 @@ mod tests {
     fn test_parse_simple_pattern() {
         let parser = ResourceParser::new();
         let pattern = parser.parse_pattern("users/{user}").unwrap();
-        
+
         assert_eq!(pattern.components.len(), 2);
         match &pattern.components[0] {
             ResourcePatternComponent::Literal(s) => assert_eq!(s, "users/"),

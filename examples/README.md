@@ -1,6 +1,6 @@
 # Examples
 
-This directory contains a comprehensive example demonstrating all the features of the `protoc-gen-rn` Rust protobuf resource name generator.
+This directory contains a comprehensive example demonstrating all the features of the `protoc-gen-rust-aip` Rust protobuf resource name generator.
 
 ## Comprehensive Example
 

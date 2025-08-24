@@ -11,8 +11,8 @@ plugins:
       - file_descriptor_set=false
       
   # Generate resource name helpers
-  - plugin: rn
-    path: ../../target/debug/protoc-gen-rn
+  - plugin: rust-aip
+    path: ../../target/debug/protoc-gen-rust-aip
     out: gen
     strategy: all
     opt:

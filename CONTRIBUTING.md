@@ -29,7 +29,7 @@ cargo build --workspace
 cargo test --workspace
 
 # Build the plugin binary
-cargo build --bin protoc-gen-rn
+cargo build --bin protoc-gen-rust-aip
 ```
 
 ### Testing
@@ -48,7 +48,7 @@ cargo run --example basic_usage
 ```
 protoc-gen-rust-aip/
 ├── crates/
-│   ├── protoc-gen-rn/       # Main protoc plugin binary
+│   ├── protoc-gen-rust-aip/ # Main protoc plugin binary
 │   ├── resource-codegen/    # Core code generation library
 │   └── resource-types/      # Runtime types and traits
 ├── examples/                # Example proto files and usage

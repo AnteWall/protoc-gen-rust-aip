@@ -52,7 +52,7 @@ impl ResourceCodegenOptions {
                 ["module_prefix", value] => {
                     options.module_prefix = value.to_string();
                 }
-                [key] if key.is_empty() => {} // Skip empty
+                [""] => {} // Skip empty
                 [key] => {
                     // Handle boolean flags without values
                     match *key {
@@ -132,10 +132,11 @@ impl ResourceCodegen {
                         &self.options,
                     )?;
 
-                    let mut output_file =
-                        prost_types::compiler::code_generator_response::File::default();
-                    output_file.name = Some(output_filename);
-                    output_file.content = Some(content);
+                    let output_file = prost_types::compiler::code_generator_response::File {
+                        name: Some(output_filename),
+                        content: Some(content),
+                        ..Default::default()
+                    };
                     response.file.push(output_file);
                 }
             }
@@ -157,13 +158,13 @@ mod tests {
     #[test]
     fn test_options_parsing() {
         let options = ResourceCodegenOptions::from_parameter("").unwrap();
-        assert_eq!(options.generate_extensions, true);
+        assert!(options.generate_extensions);
         assert_eq!(options.file_suffix, "_resources.rs");
 
         let options =
             ResourceCodegenOptions::from_parameter("generate_extensions=false,file_suffix=_rn.rs")
                 .unwrap();
-        assert_eq!(options.generate_extensions, false);
+        assert!(!options.generate_extensions);
         assert_eq!(options.file_suffix, "_rn.rs");
     }
 }

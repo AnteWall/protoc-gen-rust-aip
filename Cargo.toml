@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "crates/protoc-gen-rn",
+    "crates/protoc-gen-rust-aip",
     "crates/resource-codegen",
     "crates/resource-types",
     "examples/comprehensive",

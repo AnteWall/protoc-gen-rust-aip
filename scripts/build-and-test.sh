@@ -14,11 +14,11 @@ echo "Running tests..."
 cargo test --workspace
 
 echo "Building protoc plugin..."
-cargo build --bin protoc-gen-rn
+cargo build --bin protoc-gen-rust-aip
 
 echo ""
 echo "=== Plugin built successfully ==="
-echo "Binary location: target/debug/protoc-gen-rn"
+echo "Binary location: target/debug/protoc-gen-rust-aip"
 echo ""
 
 # Test with basic example if buf is available
@@ -26,7 +26,7 @@ if command -v buf &> /dev/null; then
     echo "=== Testing with basic example ==="
     cd examples/comprehensive
     
-    echo "Generating code with local protoc-gen-rn..."
+    echo "Generating code with local protoc-gen-rust-aip..."
     buf generate
 
     echo "Running example..."

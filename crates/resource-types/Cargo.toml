@@ -4,6 +4,12 @@ version = "0.1.0"
 edition = "2021"
 description = "Runtime types and helpers for protobuf resource names"
 license = "MIT OR Apache-2.0"
+homepage = "https://github.com/protoc-gen-rust-aip/protoc-gen-rust-aip"
+repository = "https://github.com/protoc-gen-rust-aip/protoc-gen-rust-aip"
+documentation = "https://docs.rs/resource-types"
+readme = "../../README.md"
+keywords = ["protobuf", "grpc", "google-api", "aip", "resource"]
+categories = ["development-tools", "encoding"]
 
 [dependencies]
 thiserror = { workspace = true }

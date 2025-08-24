@@ -4,9 +4,15 @@ version = "0.1.0"
 edition = "2021"
 description = "Core library for parsing protobuf descriptors and generating Rust resource name code"
 license = "MIT OR Apache-2.0"
+homepage = "https://github.com/protoc-gen-rust-aip/protoc-gen-rust-aip"
+repository = "https://github.com/protoc-gen-rust-aip/protoc-gen-rust-aip"
+documentation = "https://docs.rs/resource-codegen"
+readme = "../../README.md"
+keywords = ["protobuf", "grpc", "google-api", "aip", "resource"]
+categories = ["development-tools", "encoding"]
 
 [dependencies]
-resource-types = { path = "../resource-types" }
+resource-types = { version = "0.1.0", path = "../resource-types" }
 prost = { workspace = true }
 prost-types = { workspace = true }
 anyhow = { workspace = true }
