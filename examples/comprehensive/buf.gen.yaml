@@ -1,0 +1,20 @@
+version: v1
+managed:
+  enabled: true
+  
+plugins:
+  # Generate prost types first
+  - plugin: buf.build/community/neoeinstein-prost:v0.4.0
+    out: gen
+    opt: 
+      - bytes=.
+      - file_descriptor_set=false
+      
+  # Generate resource name helpers
+  - plugin: rn
+    path: ../../target/debug/protoc-gen-rn
+    out: gen
+    strategy: all
+    opt:
+      - generate_extensions=true
+      - file_suffix=_resources.rs

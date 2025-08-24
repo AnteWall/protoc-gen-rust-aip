@@ -1,0 +1,231 @@
+syntax = "proto3";
+
+package example.comprehensive.v1;
+
+import "google/api/resource.proto";
+
+// ===== BASIC RESOURCE PATTERNS =====
+
+// Simple topic resource (basic pattern)
+message Topic {
+  option (google.api.resource) = {
+    type: "pubsub.googleapis.com/Topic"
+    pattern: "projects/{project}/topics/{topic}"
+    singular: "topic"
+    plural: "topics"
+  };
+
+  string name = 1 [(google.api.resource_reference) = {
+    type: "pubsub.googleapis.com/Topic"
+  }];
+  
+  string display_name = 2;
+  map<string, string> labels = 3;
+}
+
+// ===== COLLECTION ID PATTERNS =====
+
+// User resource with simple collection ID
+message User {
+  option (google.api.resource) = {
+    type: "users.googleapis.com/User"
+    pattern: "users/{user}"
+    singular: "user"
+    plural: "users"
+  };
+
+  string name = 1 [(google.api.resource_reference) = {
+    type: "users.googleapis.com/User"
+  }];
+  
+  string email = 2;
+  string display_name = 3;
+}
+
+// Document resource with nested collections and multiple parent patterns
+message Document {
+  option (google.api.resource) = {
+    type: "docs.googleapis.com/Document"
+    pattern: "users/{user}/documents/{document}"
+    pattern: "projects/{project}/documents/{document}"
+    singular: "document"
+    plural: "documents"
+  };
+
+  string name = 1 [(google.api.resource_reference) = {
+    type: "docs.googleapis.com/Document"
+  }];
+  
+  string title = 2;
+  string content = 3;
+  
+  // Reference to the user who owns this document
+  string owner = 4 [(google.api.resource_reference) = {
+    type: "users.googleapis.com/User"
+  }];
+}
+
+// ===== MULTI-PATTERN RESOURCES =====
+
+// Instance that can exist at project or organization level
+message Instance {
+  option (google.api.resource) = {
+    type: "spanner.googleapis.com/Instance"
+    pattern: "projects/{project}/instances/{instance}"
+    pattern: "organizations/{organization}/instances/{instance}"
+    singular: "instance"
+    plural: "instances"
+  };
+
+  string name = 1 [(google.api.resource_reference) = {
+    type: "spanner.googleapis.com/Instance"
+  }];
+  
+  string display_name = 2;
+  string config = 3;
+  int32 node_count = 4;
+}
+
+// Database resource that can exist under different instance patterns
+message Database {
+  option (google.api.resource) = {
+    type: "spanner.googleapis.com/Database"
+    pattern: "projects/{project}/instances/{instance}/databases/{database}"
+    pattern: "organizations/{organization}/instances/{instance}/databases/{database}"
+    singular: "database"
+    plural: "databases"
+  };
+
+  string name = 1 [(google.api.resource_reference) = {
+    type: "spanner.googleapis.com/Database"
+  }];
+  
+  string display_name = 2;
+  string state = 3;
+  
+  // Reference to the instance that contains this database
+  string instance = 4 [(google.api.resource_reference) = {
+    type: "spanner.googleapis.com/Instance"
+  }];
+}
+
+// ===== RESOURCE REFERENCES =====
+
+// Project resource
+message Project {
+  option (google.api.resource) = {
+    type: "cloudresourcemanager.googleapis.com/Project"
+    pattern: "projects/{project}"
+    singular: "project"
+    plural: "projects"
+  };
+
+  string name = 1 [(google.api.resource_reference) = {
+    type: "cloudresourcemanager.googleapis.com/Project"
+  }];
+  
+  string display_name = 2;
+  string project_id = 3;
+}
+
+// Bucket resource that references a project
+message Bucket {
+  option (google.api.resource) = {
+    type: "storage.googleapis.com/Bucket"
+    pattern: "projects/{project}/buckets/{bucket}"
+    singular: "bucket"
+    plural: "buckets"
+  };
+
+  string name = 1 [(google.api.resource_reference) = {
+    type: "storage.googleapis.com/Bucket"
+  }];
+  
+  string display_name = 2;
+  string location = 3;
+  
+  // Reference to the project that contains this bucket
+  string project = 4 [(google.api.resource_reference) = {
+    type: "cloudresourcemanager.googleapis.com/Project"
+  }];
+}
+
+// Object resource with complex nesting
+message Object {
+  option (google.api.resource) = {
+    type: "storage.googleapis.com/Object"
+    pattern: "projects/{project}/buckets/{bucket}/objects/{object}"
+    singular: "object"
+    plural: "objects"
+  };
+
+  string name = 1 [(google.api.resource_reference) = {
+    type: "storage.googleapis.com/Object"
+  }];
+  
+  string content_type = 2;
+  int64 size = 3;
+  
+  // Reference to the bucket that contains this object
+  string bucket = 4 [(google.api.resource_reference) = {
+    type: "storage.googleapis.com/Bucket"
+  }];
+}
+
+// ===== SERVICE METHODS DEMONSTRATING USAGE =====
+
+// Request messages showing various resource reference patterns
+message CreateTopicRequest {
+  // Parent resource (project) where the topic will be created
+  string parent = 1 [(google.api.resource_reference) = {
+    type: "cloudresourcemanager.googleapis.com/Project"
+  }];
+  
+  // The topic to create
+  Topic topic = 2;
+  
+  // The topic ID to use
+  string topic_id = 3;
+}
+
+message CreateDocumentRequest {
+  // Parent can be either a user or project
+  string parent = 1 [(google.api.resource_reference) = {
+    child_type: "docs.googleapis.com/Document"
+  }];
+  
+  // The document to create
+  Document document = 2;
+  
+  // The document ID to use
+  string document_id = 3;
+}
+
+message CreateDatabaseRequest {
+  // Parent instance (can be at project or organization level)
+  string parent = 1 [(google.api.resource_reference) = {
+    type: "spanner.googleapis.com/Instance"
+  }];
+  
+  // The database to create
+  Database database = 2;
+  
+  // The database ID to use
+  string database_id = 3;
+}
+
+message ListObjectsRequest {
+  // Parent bucket
+  string parent = 1 [(google.api.resource_reference) = {
+    type: "storage.googleapis.com/Bucket"
+  }];
+  
+  // Standard list parameters
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListObjectsResponse {
+  repeated Object objects = 1;
+  string next_page_token = 2;
+}

@@ -1,0 +1,14 @@
+[package]
+name = "resource-types"
+version = "0.1.0"
+edition = "2021"
+description = "Runtime types and helpers for protobuf resource names"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+thiserror = { workspace = true }
+serde = { workspace = true, optional = true }
+
+[features]
+default = []
+serde = ["dep:serde"]
