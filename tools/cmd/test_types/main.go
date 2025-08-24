@@ -1,4 +1,3 @@
-package testtypes
 package main
 
 import (
