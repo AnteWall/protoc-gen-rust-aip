@@ -1,6 +1,6 @@
 [package]
 name = "protoc-gen-rust-aip"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Protoc plugin for generating Rust AIP helpers from Google API annotations"
 license = "MIT OR Apache-2.0"
@@ -16,7 +16,7 @@ name = "protoc-gen-rust-aip"
 path = "src/main.rs"
 
 [dependencies]
-resource-codegen = { version = "0.1.1", path = "../resource-codegen" }
+resource-codegen = { version = "0.1.2", path = "../resource-codegen" }
 prost = { workspace = true }
 prost-types = { workspace = true }
 anyhow = { workspace = true }
