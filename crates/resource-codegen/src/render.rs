@@ -128,6 +128,7 @@ impl ResourceRenderer {
             .map(|(i, var)| {
                 let method_name = format_ident!("{}", var.to_snake_case());
                 let doc = format!("Get the {var} component of this resource name.");
+                let index = i * 2 + 1; // Calculate at compile time to avoid clippy warnings
 
                 quote! {
                     #[doc = #doc]
@@ -135,7 +136,7 @@ impl ResourceRenderer {
                         // This is a simplified implementation
                         // In a real implementation, you'd parse the string
                         // and extract the specific component
-                        self.inner.split('/').nth(#i * 2 + 1).unwrap_or("")
+                        self.inner.split('/').nth(#index).unwrap_or("")
                     }
                 }
             })

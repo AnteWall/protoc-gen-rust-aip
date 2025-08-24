@@ -3,7 +3,6 @@
 // ===== BASIC RESOURCE PATTERNS =====
 
 /// Simple topic resource (basic pattern)
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Topic {
     #[prost(string, tag="1")]
@@ -16,7 +15,6 @@ pub struct Topic {
 // ===== COLLECTION ID PATTERNS =====
 
 /// User resource with simple collection ID
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct User {
     #[prost(string, tag="1")]
@@ -27,7 +25,6 @@ pub struct User {
     pub display_name: ::prost::alloc::string::String,
 }
 /// Document resource with nested collections and multiple parent patterns
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Document {
     #[prost(string, tag="1")]
@@ -43,7 +40,6 @@ pub struct Document {
 // ===== MULTI-PATTERN RESOURCES =====
 
 /// Instance that can exist at project or organization level
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Instance {
     #[prost(string, tag="1")]
@@ -56,7 +52,6 @@ pub struct Instance {
     pub node_count: i32,
 }
 /// Database resource that can exist under different instance patterns
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Database {
     #[prost(string, tag="1")]
@@ -72,7 +67,6 @@ pub struct Database {
 // ===== RESOURCE REFERENCES =====
 
 /// Project resource
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Project {
     #[prost(string, tag="1")]
@@ -83,7 +77,6 @@ pub struct Project {
     pub project_id: ::prost::alloc::string::String,
 }
 /// Bucket resource that references a project
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Bucket {
     #[prost(string, tag="1")]
@@ -97,7 +90,6 @@ pub struct Bucket {
     pub project: ::prost::alloc::string::String,
 }
 /// Object resource with complex nesting
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Object {
     #[prost(string, tag="1")]
@@ -113,7 +105,6 @@ pub struct Object {
 // ===== SERVICE METHODS DEMONSTRATING USAGE =====
 
 /// Request messages showing various resource reference patterns
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateTopicRequest {
     /// Parent resource (project) where the topic will be created
@@ -126,7 +117,6 @@ pub struct CreateTopicRequest {
     #[prost(string, tag="3")]
     pub topic_id: ::prost::alloc::string::String,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateDocumentRequest {
     /// Parent can be either a user or project
@@ -139,7 +129,6 @@ pub struct CreateDocumentRequest {
     #[prost(string, tag="3")]
     pub document_id: ::prost::alloc::string::String,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateDatabaseRequest {
     /// Parent instance (can be at project or organization level)
@@ -152,7 +141,6 @@ pub struct CreateDatabaseRequest {
     #[prost(string, tag="3")]
     pub database_id: ::prost::alloc::string::String,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListObjectsRequest {
     /// Parent bucket
@@ -164,7 +152,6 @@ pub struct ListObjectsRequest {
     #[prost(string, tag="3")]
     pub page_token: ::prost::alloc::string::String,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListObjectsResponse {
     #[prost(message, repeated, tag="1")]

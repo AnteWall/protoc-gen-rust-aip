@@ -21,9 +21,10 @@ usage() {
     echo "  $0 patch --dry-run  # Show what would happen"
     echo ""
     echo "This script will:"
-    echo "  1. Bump version in all Cargo.toml files"
-    echo "  2. Create a git commit and tag"
-    echo "  3. Push to GitHub and trigger release"
+    echo "  1. Run pre-release checks (tests, fmt, clippy)"
+    echo "  2. Bump version in all Cargo.toml files"
+    echo "  3. Create a git commit and tag"
+    echo "  4. Push to GitHub and trigger release"
     exit 1
 }
 

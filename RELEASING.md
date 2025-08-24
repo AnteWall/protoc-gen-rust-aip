@@ -57,14 +57,19 @@ For more control, use the individual scripts:
 
 ### `bump-version.sh`
 
-1. **Updates all Cargo.toml files** with the new version:
+1. **Runs pre-release checks**:
+   - Verifies working directory is clean
+   - Runs tests (`cargo test`)
+   - Checks code formatting (`cargo fmt --check`)
+   - Runs clippy (`cargo clippy`)
+2. **Updates all Cargo.toml files** with the new version:
    - `crates/protoc-gen-rust-aip/Cargo.toml`
    - `crates/resource-codegen/Cargo.toml`
    - `crates/resource-types/Cargo.toml`
-2. **Updates internal dependencies** to use the new version
-3. **Runs `cargo check`** to verify everything still compiles
-4. **Creates a git commit** with the version changes
-5. **Creates a git tag** (e.g., `v0.1.1`)
+3. **Updates internal dependencies** to use the new version
+4. **Runs `cargo check`** to verify everything still compiles
+5. **Creates a git commit** with the version changes
+6. **Creates a git tag** (e.g., `v0.1.1`)
 
 ### `release.sh`
 

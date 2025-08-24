@@ -1,20 +1,20 @@
-version: v1
+version: v2
 managed:
   enabled: true
   
 plugins:
   # Generate prost types first
-  - plugin: buf.build/community/neoeinstein-prost:v0.4.0
+  - remote: buf.build/community/neoeinstein-prost:v0.4.0
     out: gen
     opt: 
       - bytes=.
       - file_descriptor_set=false
       
   # Generate resource name helpers
-  - plugin: rust-aip
-    path: ../../target/debug/protoc-gen-rust-aip
+  - local: ../../target/debug/protoc-gen-rust-aip
     out: gen
-    strategy: all
     opt:
       - generate_extensions=true
       - file_suffix=_resources.rs
+deps:
+  - buf.build/googleapis/googleapis

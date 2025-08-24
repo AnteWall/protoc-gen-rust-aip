@@ -35,18 +35,18 @@ fn basic_resource_patterns() -> Result<(), Box<dyn std::error::Error>> {
 
     // Project resource: projects/{project}
     let project_name = ProjectName::new("my-project");
-    println!("   Project: {}", project_name);
+    println!("   Project: {project_name}");
     println!("   Project ID: {}", project_name.project());
 
     // Topic resource: projects/{project}/topics/{topic}
     let topic_name = TopicName::new("my-project", "notifications");
-    println!("   Topic: {}", topic_name);
+    println!("   Topic: {topic_name}");
     println!("   Project: {}", topic_name.project());
     println!("   Topic: {}", topic_name.topic());
 
     // Bucket resource: projects/{project}/buckets/{bucket}
     let bucket_name = BucketName::new("my-project", "media-files");
-    println!("   Bucket: {}", bucket_name);
+    println!("   Bucket: {bucket_name}");
     println!("   Project: {}", bucket_name.project());
     println!("   Bucket: {}", bucket_name.bucket());
 
@@ -61,18 +61,18 @@ fn collection_id_patterns() -> Result<(), Box<dyn std::error::Error>> {
 
     // User resource: users/{user_id}
     let user_name = UserName::new("alice");
-    println!("   User: {}", user_name);
+    println!("   User: {user_name}");
     println!("   User ID: {}", user_name.user_id());
 
     // Document resource: users/{user_id}/documents/{document_id}
     let doc_name = DocumentName::new("alice", "my-document");
-    println!("   Document: {}", doc_name);
+    println!("   Document: {doc_name}");
     println!("   User ID: {}", doc_name.user_id());
     println!("   Document ID: {}", doc_name.document_id());
 
     // Database resource: projects/{project}/instances/{instance}/databases/{database}
     let db_name = DatabaseName::new("my-project", "my-instance", "my-database");
-    println!("   Database: {}", db_name);
+    println!("   Database: {db_name}");
     println!("   Project: {}", db_name.project());
     println!("   Instance: {}", db_name.instance());
     println!("   Database: {}", db_name.database());
@@ -88,7 +88,7 @@ fn multi_pattern_resources() -> Result<(), Box<dyn std::error::Error>> {
 
     // Instance resource with zone pattern: projects/{project}/zones/{zone}/instances/{instance}
     let zone_instance = InstanceName::new("my-project", "us-central1-a", "web-server-1");
-    println!("   Zone Instance: {}", zone_instance);
+    println!("   Zone Instance: {zone_instance}");
     println!("   Project: {}", zone_instance.project());
     println!("   Zone: {}", zone_instance.zone());
     println!("   Instance: {}", zone_instance.instance());
@@ -100,7 +100,7 @@ fn multi_pattern_resources() -> Result<(), Box<dyn std::error::Error>> {
     // Parse existing instance names to see pattern detection
     let zone_str = "projects/test/zones/us-west1-b/instances/worker";
     if let Ok(parsed_zone) = InstanceName::try_from(zone_str.to_string()) {
-        println!("   Parsed zone instance: {}", parsed_zone);
+        println!("   Parsed zone instance: {parsed_zone}");
         println!("   Detected zone: {}", parsed_zone.zone());
     }
 

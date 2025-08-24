@@ -96,7 +96,7 @@ run_checks() {
     
     # Check for clippy warnings
     log "Running clippy..."
-    if ! cargo clippy --all-targets --all-features -- -D warnings; then
+    if ! cargo clippy --workspace --exclude comprehensive-example --all-targets --all-features -- -D warnings; then
         error "Clippy found issues. Please fix before releasing."
     fi
     

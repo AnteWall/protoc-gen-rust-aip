@@ -12,12 +12,12 @@ async fn main() -> Result<()> {
     // Handle version flag
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 && (args[1] == "--version" || args[1] == "-V") {
-        println!("protoc-gen-rust-aip {}", VERSION);
+        println!("protoc-gen-rust-aip {VERSION}");
         return Ok(());
     }
 
     if args.len() > 1 && (args[1] == "--help" || args[1] == "-h") {
-        println!("protoc-gen-rust-aip {}", VERSION);
+        println!("protoc-gen-rust-aip {VERSION}");
         println!("Generate Rust AIP helpers from protobuf resource annotations");
         println!();
         println!("This is a protoc plugin. Use it with protoc or buf:");

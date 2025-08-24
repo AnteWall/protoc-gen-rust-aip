@@ -147,6 +147,29 @@ main() {
     # Check git status
     check_git_status
     
+    # Run pre-release checks
+    log "Running pre-release checks..."
+    
+    # Run tests
+    log "Running tests..."
+    if ! cargo test --quiet; then
+        error "Tests failed. Please fix before bumping version."
+    fi
+    
+    # Check formatting
+    log "Checking code formatting..."
+    if ! cargo fmt --check; then
+        error "Code is not formatted. Run 'cargo fmt' first."
+    fi
+    
+    # Check for clippy warnings
+    log "Running clippy..."
+    if ! cargo clippy --workspace --exclude comprehensive-example --all-targets --all-features -- -D warnings; then
+        error "Clippy found issues. Please fix before bumping version."
+    fi
+    
+    log "All pre-release checks passed ✅"
+    
     # Get current version for replacement
     local current_version
     current_version=$(get_current_version)
