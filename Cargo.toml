@@ -1,7 +1,5 @@
 [workspace]
-members = [
-    "examples/comprehensive",
-]
+members = ["examples/comprehensive"]
 resolver = "2"
 
 [workspace.dependencies]

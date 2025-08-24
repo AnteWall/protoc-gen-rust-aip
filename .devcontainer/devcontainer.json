@@ -8,7 +8,8 @@
 		"ghcr.io/schlich/devcontainer-features/powerlevel10k:1": {},
 		"ghcr.io/nils-geistmann/devcontainers-features/zsh:0": {},
 		"ghcr.io/devcontainers-extra/features/zsh-plugins:0": {},
-		"ghcr.io/devcontainers-extra/features/protoc:1": {}
+		"ghcr.io/devcontainers-extra/features/protoc:1": {},
+		"ghcr.io/devcontainers/features/go:1": {}
 	},
 	// Use 'mounts' to make the cargo cache persistent in a Docker Volume.
 	// "mounts": [
@@ -23,7 +24,7 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sudo curl -sSL \"https://github.com/bufbuild/buf/releases/latest/download/buf-$(uname -s)-$(uname -m)\" -o /usr/local/bin/buf && sudo chmod +x /usr/local/bin/buf && buf --version && echo 'buf CLI installed successfully'",
+	"postCreateCommand": "set -e && go version || true && sudo apt-get update && sudo apt-get install -y ca-certificates curl && sudo curl -sSL \"https://github.com/bufbuild/buf/releases/latest/download/buf-$(uname -s)-$(uname -m)\" -o /usr/local/bin/buf && sudo chmod +x /usr/local/bin/buf && buf --version && echo 'buf CLI installed successfully'",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
