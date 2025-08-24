@@ -2,8 +2,6 @@
 
 A Rust code generator that produces zero-cost helpers for protobuf Resource Names based on `google.api.resource` and `google.api.resource_reference` annotations. The generator runs as a **protoc/buf plugin** and outputs idiomatic Rust types + utilities that work seamlessly with `prost`-generated structs.
 
-> **🚀 Like `protoc-gen-go-aip` for Rust**  
-> This is the Rust equivalent of [protoc-gen-go-aip](https://github.com/einride/aip-go). Install with `cargo install protoc-gen-rust-aip` just like `go install go.einride.tech/aip/cmd/protoc-gen-go-aip`.
 
 ## Quick Start
 
@@ -210,6 +208,19 @@ cargo test
 # Test with example
 cd examples/basic-resource
 buf generate
+```
+
+### Releasing
+
+See [RELEASING.md](RELEASING.md) for the complete release process.
+
+Quick release:
+```bash
+# Patch release (0.1.0 -> 0.1.1)
+./scripts/make-release.sh patch
+
+# Minor release (0.1.0 -> 0.2.0)  
+./scripts/make-release.sh minor
 ```
 
 ## License
