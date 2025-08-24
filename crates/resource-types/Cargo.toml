@@ -1,0 +1,10 @@
+[package]
+name = "resource-types"
+version = "0.1.0"
+edition = "2021"
+description = "Minimal resource name types used by examples"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "resource_types"
+path = "src/lib.rs"
