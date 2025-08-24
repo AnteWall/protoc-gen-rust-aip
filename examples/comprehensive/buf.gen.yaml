@@ -11,7 +11,7 @@ plugins:
       - file_descriptor_set=false
       
   # Generate resource name helpers
-  - local: ../../target/debug/protoc-gen-rust-aip
+  - local: ../../dist/protoc-gen-go-aip
     out: gen
     opt:
       - generate_extensions=true

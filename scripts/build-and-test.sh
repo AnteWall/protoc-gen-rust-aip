@@ -13,13 +13,14 @@ if ! command -v go &> /dev/null; then
 fi
 
 echo "Building Go plugin..."
-# Build plugin binary at repo root
-go build -o protoc-gen-go-aip main.go
-chmod +x protoc-gen-go-aip || true
+# Ensure dist directory exists and build plugin binary into it
+mkdir -p dist
+go build -o dist/protoc-gen-go-aip main.go
+chmod +x dist/protoc-gen-go-aip || true
 
 echo ""
 echo "=== Plugin built successfully ==="
-echo "Binary location: $(pwd)/protoc-gen-go-aip"
+echo "Binary location: $(pwd)/dist/protoc-gen-go-aip"
 echo ""
 
 echo "Running go tests..."
@@ -32,8 +33,8 @@ if command -v buf &> /dev/null; then
     cd examples/comprehensive
 
     echo "Generating code with local protoc-gen-go-aip..."
-    # Make the plugin discoverable to buf/protoc by adding repo root to PATH
-    export PATH="$(pwd)/../..:$PATH"
+    # Make the plugin discoverable to buf/protoc by adding dist to PATH
+    export PATH="$(pwd)/../..:$(pwd)/../../dist:$PATH"
     buf generate
 
     echo "Example generation finished."
