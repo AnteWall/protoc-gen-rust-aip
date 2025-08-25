@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an idea for this project
 title: ''
-labels: 'enhancement'
+labels: enhancement
 assignees: ''
 
 ---
@@ -19,12 +19,18 @@ A clear and concise description of any alternative solutions or features you've 
 **Use case**
 Describe the specific use case or scenario where this feature would be helpful.
 
-**Proto example (if applicable)**
-If this relates to protobuf patterns or annotations, provide an example:
+**Proto example**
+If applicable, provide an example proto file that would benefit from this feature:
 
-```protobuf
-syntax = "proto3";
-// Example proto showing the desired behavior
+```proto
+// Example proto file
+```
+
+**Expected generated code**
+If applicable, show what the generated Rust code should look like:
+
+```rust
+// Expected Rust code
 ```
 
 **Additional context**

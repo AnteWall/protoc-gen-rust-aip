@@ -1,10 +1,8 @@
-module protoc-gen-rust-aip
+module github.com/AnteWall/protoc-gen-rust-aip
 
 go 1.21
 
 require (
-    google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb
-    google.golang.org/protobuf v1.31.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576
+	google.golang.org/protobuf v1.35.2
 )
-
-require google.golang.org/genproto v0.0.0-20230920204549-e6e6cdab5c13 // indirect

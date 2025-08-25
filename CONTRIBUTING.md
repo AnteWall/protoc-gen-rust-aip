@@ -4,128 +4,141 @@ Thank you for your interest in contributing to protoc-gen-rust-aip! This documen
 
 ## Getting Started
 
-1. Fork the repository
-2. Clone your fork locally
-3. Create a new branch for your changes
-4. Make your changes
-5. Run tests to ensure everything works
-6. Submit a pull request
-
-## Development Setup
-
 ### Prerequisites
 
-- Rust (latest stable version)
-- `protoc` (Protocol Buffers compiler)
-- `buf` CLI tool (for testing with examples)
+- Go 1.21 or later
+- Rust 1.70 or later (for testing generated code)
+- Protocol Buffers compiler (`protoc`)
+- Buf CLI (recommended)
 
-### Building
+### Development Setup
 
-```bash
-# Build all crates
-cargo build --workspace
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-org/protoc-gen-rust-aip.git
+   cd protoc-gen-rust-aip
+   ```
 
-# Run tests
-cargo test --workspace
+2. Install dependencies:
+   ```bash
+   go mod download
+   ```
 
-# Build the plugin binary
-cargo build --bin protoc-gen-rust-aip
-```
+3. Run tests:
+   ```bash
+   make test
+   ```
 
-### Testing
+4. Build the plugin:
+   ```bash
+   make build
+   ```
 
-```bash
-# Run unit tests
-cargo test --workspace
+## Development Workflow
 
-# Test with examples
-cd examples/basic-resource
-cargo run --example basic_usage
-```
+### Making Changes
 
-## Project Structure
-
-```
-protoc-gen-rust-aip/
-├── crates/
-│   ├── protoc-gen-rust-aip/ # Main protoc plugin binary
-│   ├── resource-codegen/    # Core code generation library
-│   └── resource-types/      # Runtime types and traits
-├── examples/                # Example proto files and usage
-│   ├── basic-resource/      # Simple resource example
-│   ├── multi-pattern/       # Multiple patterns example
-│   ├── resource-reference/  # Resource references example
-│   └── collection-ids/      # Complex nested resources
-└── scripts/                 # Build and test scripts
-```
-
-## Guidelines
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Make your changes
+4. Add or update tests as needed
+5. Run the test suite: `make test`
+6. Run linting: `make lint`
+7. Commit your changes with a descriptive message
+8. Push to your fork and create a pull request
 
 ### Code Style
 
-- Follow standard Rust formatting (`cargo fmt`)
-- Use `cargo clippy` to catch common issues
-- Add appropriate documentation comments
-- Write tests for new functionality
+- Follow standard Go formatting (`gofmt`)
+- Use meaningful variable and function names
+- Add comments for exported functions and complex logic
+- Keep functions focused and reasonably sized
 
-### Commit Messages
+### Testing
 
-- Use clear, descriptive commit messages
-- Start with a brief summary (≤50 characters)
-- Include detailed explanation if needed
+- Add unit tests for new functionality
+- Update integration tests if needed
+- Test generated Rust code compiles and works correctly
+- Run `make test-coverage` to ensure adequate coverage
 
-### Pull Requests
+## Types of Contributions
 
-- Include tests for new features
-- Update documentation as needed
-- Ensure all CI checks pass
-- Reference any related issues
+### Bug Reports
 
-### Adding Examples
+Please use the bug report template and include:
+- Steps to reproduce the issue
+- Expected vs actual behavior
+- Proto files that demonstrate the issue
+- Generated code output (if applicable)
 
-When adding new examples:
+### Feature Requests
 
-1. Create a new directory under `examples/`
-2. Include `buf.yaml`, `buf.gen.yaml`, and proto files
-3. Add a `Cargo.toml` with an example binary
-4. Update the examples README
+Please use the feature request template and include:
+- Use case description
+- Example proto files
+- Expected generated code
+- Alternatives considered
 
-### Extending the Code Generator
+### Code Contributions
 
-The code generation happens in several phases:
+We welcome:
+- Bug fixes
+- New features
+- Performance improvements
+- Documentation improvements
+- Test improvements
 
-1. **Parsing** (`parse_descriptor.rs`): Extract resource annotations from protobuf descriptors
-2. **Rendering** (`render.rs`): Generate Rust code from parsed resources
-3. **Emission** (`emit_rust.rs`): High-level interface for code generation
+## Code Generation Guidelines
 
-When adding new features:
+When modifying code generation:
 
-- Add parsing logic for new annotations in `parse_descriptor.rs`
-- Add rendering logic for new code patterns in `render.rs`
-- Add tests to verify the generated code works correctly
+1. **Generated code quality**: Ensure generated Rust code is:
+   - Idiomatic and follows Rust conventions
+   - Clippy-clean (no warnings)
+   - Well-documented with proper rustdoc comments
+   - Efficient and minimal overhead
 
-## AIP Compliance
+2. **Backward compatibility**: Maintain compatibility with existing proto files unless making a breaking change (which requires version bump)
 
-This project aims to be compliant with Google's API Improvement Proposals (AIPs):
+3. **Error handling**: Provide clear error messages for invalid proto configurations
 
-- [AIP-122: Resource names](https://google.aip.dev/122)
-- [AIP-123: Resource types](https://google.aip.dev/123)
-- [AIP-124: Resource references](https://google.aip.dev/124)
+4. **Testing**: Test with various proto file configurations:
+   - Simple resources
+   - Multiple patterns
+   - Child resources
+   - Edge cases
 
-Please ensure any changes maintain compliance with these standards.
+## Pull Request Process
 
-## Testing Strategy
+1. Ensure all tests pass
+2. Update documentation if needed
+3. Add entry to CHANGELOG.md
+4. Ensure your PR has a clear description
+5. Link any related issues
+6. Request review from maintainers
 
-- **Unit tests**: Test individual functions and components
-- **Integration tests**: Test the plugin end-to-end with example protos
-- **Example tests**: Verify generated code compiles and works correctly
+### PR Requirements
+
+- [ ] Tests pass
+- [ ] Linting passes
+- [ ] Documentation updated
+- [ ] CHANGELOG.md updated
+- [ ] Generated code examples provided (if applicable)
+
+## Release Process
+
+Releases are handled by maintainers:
+
+1. Update version in relevant files
+2. Update CHANGELOG.md
+3. Create release PR
+4. Tag release after merge
+5. GitHub Actions handles building and publishing
 
 ## Questions?
 
-If you have questions about contributing, please:
-
-1. Check existing issues and discussions
-2. Open a new issue for discussion
-3. Reach out to maintainers
+- Create a discussion for general questions
+- Create an issue for bugs or feature requests
+- Check existing issues and discussions first
 
 Thank you for contributing!

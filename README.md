@@ -1,228 +1,207 @@
 # protoc-gen-rust-aip
 
-A Rust code generator that produces zero-cost helpers for protobuf Resource Names based on `google.api.resource` and `google.api.resource_reference` annotations. The generator runs as a **protoc/buf plugin** and outputs idiomatic Rust types + utilities that work seamlessly with `prost`-generated structs.
+[![CI](https://github.com/AnteWall/protoc-gen-rust-aip/actions/workflows/ci.yml/badge.svg)](https://github.com/AnteWall/protoc-gen-rust-aip/actions/workflows/ci.yml)
+[![Release](https://github.com/AnteWall/protoc-gen-rust-aip/actions/workflows/release.yml/badge.svg)](https://github.com/AnteWall/protoc-gen-rust-aip/actions/workflows/release.yml)
+[![codecov](https://codecov.io/gh/AnteWall/protoc-gen-rust-aip/branch/main/graph/badge.svg)](https://codecov.io/gh/AnteWall/protoc-gen-rust-aip)
+[![Go Report Card](https://goreportcard.com/badge/github.com/AnteWall/protoc-gen-rust-aip)](https://goreportcard.com/report/github.com/AnteWall/protoc-gen-rust-aip)
 
+A protoc plugin for generating idiomatic Rust code for Google [API Improvement Proposals (AIP)](https://google.aip.dev/) resource names.
 
-## Quick Start
+> **Note**: All generated resource types use the `ResourceName` suffix for clarity (e.g., `BookResourceName`, `ShelfResourceName`).
 
-### Installation
+## Features
 
-Choose your preferred method:
+- **Resource Name Generation**: Generates Rust structs and enums for AIP resource names with proper validation, parsing, and formatting
+- **Multi-Pattern Support**: Handles resources with multiple patterns using Rust enums for type safety
+- **Future Multi-Pattern**: Supports `FUTURE_MULTI_PATTERN` resources for forward compatibility
+- **Idiomatic Rust**: Generates code following Rust best practices with proper error handling and trait implementations
+- **Comprehensive Validation**: Includes field validation, wildcard detection, and pattern matching
+- **Clear Naming**: All generated types use the `ResourceName` suffix (e.g., `BookResourceName`, `ShelfResourceName`) for clarity
 
-```bash
-# Option 1: Install from source (requires Rust)
-cargo install protoc-gen-rust-aip
+## Resource Name Patterns Supported
 
-# Option 2: Download binary (Linux/macOS)
-curl -sSL https://raw.githubusercontent.com/protoc-gen-rust-aip/protoc-gen-rust-aip/main/install.sh | bash
-
-# Option 3: Manual download
-curl -L "https://github.com/protoc-gen-rust-aip/protoc-gen-rust-aip/releases/latest/download/protoc-gen-rust-aip-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)" -o protoc-gen-rust-aip
-chmod +x protoc-gen-rust-aip
-sudo mv protoc-gen-rust-aip /usr/local/bin/
+### Single Pattern Resources
+Simple resources with one naming pattern:
+```proto
+message Book {
+  option (google.api.resource) = {
+    type: "library.googleapis.com/Book"
+    pattern: "projects/{project}/books/{book}"
+    singular: "book"
+    plural: "books"
+  };
+}
 ```
 
-### Usage with Buf
+Generates:
+```rust
+pub struct BookResourceName {
+    pub project: String,
+    pub book: String,
+}
+```
 
-Add to your `buf.gen.yaml`:
+### Multi-Pattern Resources
+Resources with multiple naming patterns:
+```proto
+message Shelf {
+  option (google.api.resource) = {
+    type: "library.googleapis.com/Shelf"
+    pattern: "projects/{project}/shelves/{shelf}"
+    pattern: "users/{user}/shelves/{shelf}"
+    singular: "shelf"
+    plural: "shelves"
+  };
+}
+```
 
+Generates:
+```rust
+pub enum ShelfResourceName {
+    Projects(ProjectsShelfResourceName),
+    Users(UsersShelfResourceName),
+}
+```
+
+### Future Multi-Pattern Resources
+Resources prepared for future pattern expansion:
+```proto
+message Author {
+  option (google.api.resource) = {
+    type: "library.googleapis.com/Author"
+    pattern: "authors/{author}"
+    history: FUTURE_MULTI_PATTERN
+    singular: "author"
+    plural: "authors"
+  };
+}
+```
+
+### Nested Resources
+Resources nested under other resources:
+```proto
+message Review {
+  option (google.api.resource) = {
+    type: "library.googleapis.com/Review"
+    pattern: "projects/{project}/books/{book}/reviews/{review}"
+    singular: "review"
+    plural: "reviews"
+  };
+}
+```
+
+## Installation
+
+### Prerequisites
+- Go 1.21+
+- Protocol Buffers compiler (`protoc`)
+- [Buf CLI](https://buf.build/) (recommended)
+
+### Install the Plugin
+
+```bash
+go install github.com/AnteWall/protoc-gen-rust-aip/cmd/protoc-gen-rust-aip@latest
+```
+
+## Usage
+
+### With Buf (Recommended)
+
+1. Create a `buf.gen.yaml` file:
 ```yaml
 version: v2
 plugins:
   - local: protoc-gen-rust-aip
-    out: gen/rust
-    opt:
-      - paths=source_relative
+    out: src/gen
+    strategy: directory
 ```
 
-### Usage with protoc
-
-```bash
-protoc --rust-aip_out=gen/rust --rust_out=gen/rust your_file.proto
-```
-
-## Features
-
-- **Zero-cost abstractions**: Generated types are newtypes that compile to simple strings
-- **Type safety**: Compile-time validation of resource name patterns
-- **Seamless integration**: Works with existing `prost`-generated code
-- **Pattern matching**: Support for multiple resource patterns per type
-- **Validation**: Runtime parsing and validation of resource names
-- **Buf integration**: Works as a protoc plugin with buf
-
-## Example
-
-### Proto Definition
-
-```protobuf
-syntax = "proto3";
-
-import "google/api/resource.proto";
-
-message Topic {
-  option (google.api.resource) = {
-    type: "pubsub.googleapis.com/Topic"
-    pattern: "projects/{project}/topics/{topic}"
-  };
-  
-  string name = 1 [(google.api.resource_reference) = {
-    type: "pubsub.googleapis.com/Topic"
-  }];
-}
-```
-
-### Generated Rust Code Usage
-
-```rust
-use generated::pubsub::TopicName;
-
-// Parse from string
-let topic = TopicName::try_from("projects/my-project/topics/my-topic")?;
-
-// Access components
-println!("Project: {}", topic.project());
-println!("Topic: {}", topic.topic());
-
-// Convert back to string
-let name_str: String = topic.into();
-```
-
-## Complete Example
-
-### 1. Setup your project
-
-```bash
-# Initialize buf configuration
-buf config init
-
-# Create your proto files directory
-mkdir -p proto
-```
-
-### 2. Configure buf.yaml
-
+2. Add dependencies to your `buf.yaml`:
 ```yaml
 version: v2
-modules:
-  - path: proto
 deps:
   - buf.build/googleapis/googleapis
 ```
 
-### 3. Configure buf.gen.yaml
-
-```yaml
-version: v2
-plugins:
-  - local: protoc-gen-rust-aip
-    out: gen/rust
-    opt:
-      - paths=source_relative
-  - remote: buf.build/community/neoeinstein-prost
-    out: gen/rust
-    opt: 
-      - bytes=.
-```
-
-### 4. Add resource annotations to your proto files
-
-```protobuf
-syntax = "proto3";
-
-import "google/api/resource.proto";
-
-message Topic {
-  option (google.api.resource) = {
-    type: "pubsub.googleapis.com/Topic"
-    pattern: "projects/{project}/topics/{topic}"
-  };
-  
-  string name = 1 [(google.api.resource_reference) = {
-    type: "pubsub.googleapis.com/Topic"
-  }];
-}
-```
-
-### 5. Generate code
-
+3. Generate code:
 ```bash
 buf generate
 ```
 
-### 6. Use the generated types
+### With protoc
 
-```rust
-use generated::pubsub::TopicName;
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Parse from string
-    let topic = TopicName::try_from("projects/my-project/topics/my-topic")?;
-
-    // Access components
-    println!("Project: {}", topic.project());
-    println!("Topic: {}", topic.topic());
-
-    // Convert back to string
-    let name_str: String = topic.into();
-    println!("Full name: {}", name_str);
-    
-    Ok(())
-}
+```bash
+protoc --rust-aip_out=./src/gen your_proto_files.proto
 ```
 
-## How it works
+## Generated Code Features
 
-The plugin generates zero-cost Rust types for protobuf resource names. For each resource, you get:
+### Constructors
+```rust
+let book = BookResourceName::new("my-project", "rust-guide");
+```
 
-- **Type-safe wrappers**: `TopicName` instead of `String`
-- **Pattern validation**: Ensures resource names match their patterns
-- **Component access**: Extract parts like `project()` and `topic()` 
-- **Standard traits**: `TryFrom<String>`, `Display`, `AsRef<str>`
+### Display and Parsing
+```rust
+// Display
+println!("{}", book); // "projects/my-project/books/rust-guide"
+
+// Parse from string
+let parsed = BookResourceName::from_str("projects/example/books/test")?;
+```
+
+### Validation
+```rust
+book.validate()?; // Validates field constraints
+```
+
+### Wildcard Detection
+```rust
+let wildcard_book = BookResourceName::new("project", "-");
+assert!(wildcard_book.contains_wildcard());
+```
+
+### Multi-Pattern Parsing
+```rust
+// Automatically determines the correct pattern
+let shelf = parse_shelf_resource_name("users/alice/shelves/favorites")?;
+match shelf {
+    ShelfResourceName::Projects(inner) => println!("Project shelf: {}", inner),
+    ShelfResourceName::Users(inner) => println!("User shelf: {}", inner),
+}
+```
 
 ## Examples
 
-The `examples/` directory contains working examples:
+See the [comprehensive example](examples/) which demonstrates all supported resource name patterns:
 
 ```bash
-# Try the basic example
-cd examples/basic-resource
-buf generate
-cargo run --example basic_usage
+cd examples
+cargo run
 ```
 
-Available examples:
-- `basic-resource/`: Simple resource with single pattern
-- `multi-pattern/`: Resource with multiple patterns  
-- `resource-reference/`: Cross-resource references
-- `collection-ids/`: Collection identifiers
+## Architecture
 
-## Development
+The plugin follows a modular design:
 
-```bash
-# Build all crates
-cargo build
+- **Plugin Core** (`internal/genaip/`): Main code generation logic
+- **Command Entry Point** (`cmd/protoc-gen-rust-aip/`): Minimal entry point for the protoc plugin
+- **Resource Utilities** (`pkg/resourcename/`): Resource name pattern parsing and validation utilities
+- **Code Generation**: Generates idiomatic Rust with proper error handling and trait implementations
 
-# Run tests
-cargo test
+## Contributing
 
-# Test with example
-cd examples/basic-resource
-buf generate
-```
-
-### Releasing
-
-See [RELEASING.md](RELEASING.md) for the complete release process.
-
-Quick release:
-```bash
-# Patch release (0.1.0 -> 0.1.1)
-./scripts/make-release.sh patch
-
-# Minor release (0.1.0 -> 0.2.0)  
-./scripts/make-release.sh minor
-```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
 ## License
 
-Licensed under either of Apache License, Version 2.0 or MIT license at your option.
+[MIT License](LICENSE)
+
+## Related Projects
+
+- [Google AIPs](https://google.aip.dev/) - API Improvement Proposals
+- [Buf](https://buf.build/) - Protocol buffer tooling
