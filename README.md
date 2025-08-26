@@ -219,8 +219,8 @@ tonic = { version = "0.12", features = ["gzip"] }
 // Include generated protobuf modules
 include!("gen/mod.rs");
 
-// Include AIP resource names
-include!("gen/your_service_aip.rs");
+// Include all AIP resource names with a single include
+include!("gen/include_aip.rs");
 
 // Re-export commonly used types for convenience
 pub use your_service::v1::*;
@@ -282,6 +282,32 @@ protoc --rust-aip_out=./src/gen \
 
 ## Generated Code Features
 
+### Consolidated Include File
+
+The plugin automatically generates an `include_aip.rs` file that includes all AIP resource name files:
+
+```rust
+// Generated include_aip.rs
+use std::fmt;
+use std::str::FromStr;
+
+include!("library_aip.rs");
+include!("bookstore_aip.rs");
+// ... includes all *_aip.rs files
+```
+
+Use it in your library:
+```rust
+// In your lib.rs
+include!("gen/mod.rs");
+include!("gen/include_aip.rs");  // Single include for all AIP resources
+```
+
+This approach:
+- ✅ Avoids import conflicts when using multiple services
+- ✅ Provides a single entry point for all AIP resource names  
+- ✅ Scales automatically as you add more proto files
+
 ### Constructors
 ```rust
 let book = BookResourceName::new("my-project", "rust-guide");
@@ -328,14 +354,17 @@ A complete library crate showing:
 - AIP resource name generation  
 - prost-crate integration for features
 - Proper module structure
+- **Multiple proto files** (library.proto and bookstore.proto)
+- **Consolidated include_aip.rs** for all AIP resources
 
 ### Test Application (`examples/test-app/`)
 
 A test application that consumes the library and demonstrates:
-- Using generated protobuf types
+- Using generated protobuf types from multiple services
 - Resource name creation and validation
 - gRPC client setup
 - Error handling
+- **Cross-service resource name usage**
 
 ### Running the Examples
 

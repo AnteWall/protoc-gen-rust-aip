@@ -5,9 +5,6 @@
 // 	protoc (unknown)
 // source: library.proto
 
-use std::fmt;
-use std::str::FromStr;
-
 /// Resource name for library.googleapis.com/Book
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BookResourceName {

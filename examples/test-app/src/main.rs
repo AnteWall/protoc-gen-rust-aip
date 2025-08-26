@@ -77,6 +77,25 @@ async fn test_basic_types() -> Result<(), Box<dyn std::error::Error>> {
     
     println!("Created Publisher: {}", publisher.display_name);
     
+    // Test new bookstore types from the second proto file
+    use build_with_buf::example::bookstore::v1::*;
+    
+    let store = Store {
+        name: "stores/downtown-books".to_string(),
+        display_name: "Downtown Books".to_string(),
+        address: "123 Main St, City".to_string(),
+    };
+    
+    println!("Created Store: {} at {}", store.display_name, store.address);
+    
+    let category = Category {
+        name: "stores/downtown-books/categories/fiction".to_string(),
+        display_name: "Fiction".to_string(),
+        description: "Fictional literature and novels".to_string(),
+    };
+    
+    println!("Created Category: {}", category.display_name);
+    
     Ok(())
 }
 
@@ -123,6 +142,19 @@ async fn test_resource_names() -> Result<(), Box<dyn std::error::Error>> {
     // Test parsing shelf resource names
     let parsed_shelf = parse_shelf_resource_name("projects/my-project/shelves/programming")?;
     println!("Parsed shelf resource name: {}", parsed_shelf);
+    
+    // Test new bookstore resource names
+    let store_name = StoreResourceName::new("downtown-books");
+    println!("Store resource name: {}", store_name.to_string());
+    println!("Store resource type: {}", store_name.resource_type());
+    store_name.validate().expect("Store name should be valid");
+    println!("Store name validation: PASSED");
+    
+    let category_name = CategoryResourceName::new("downtown-books", "fiction");
+    println!("Category resource name: {}", category_name.to_string());
+    println!("Category resource type: {}", category_name.resource_type());
+    category_name.validate().expect("Category name should be valid");
+    println!("Category name validation: PASSED");
     
     Ok(())
 }

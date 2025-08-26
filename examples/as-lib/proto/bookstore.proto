@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package example.bookstore.v1;
+
+option go_package = "example/bookstore/v1";
+
+import "google/api/resource.proto";
+
+// A bookstore service with additional resources
+message Store {
+  option (google.api.resource) = {
+    type: "bookstore.googleapis.com/Store"
+    pattern: "stores/{store}"
+    singular: "store"
+    plural: "stores"
+  };
+
+  string name = 1;
+  string display_name = 2;
+  string address = 3;
+}
+
+message Category {
+  option (google.api.resource) = {
+    type: "bookstore.googleapis.com/Category"
+    pattern: "stores/{store}/categories/{category}"
+    singular: "category"
+    plural: "categories"
+  };
+
+  string name = 1;
+  string display_name = 2;
+  string description = 3;
+}
