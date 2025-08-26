@@ -1,7 +1,0 @@
-version: v2
-inputs:
-  - directory: proto
-plugins:
-  - local: protoc-gen-rust-aip
-    out: src
-    strategy: all

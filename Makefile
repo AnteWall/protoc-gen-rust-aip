@@ -1,6 +1,6 @@
 # Makefile for protoc-gen-rust-aip
 
-.PHONY: help build build-all install test test-rust coverage coverage-rust bench examples generate fmt lint lint-rust lint-all check all dev clean
+.PHONY: help build build-all install test test-rust coverage coverage-rust bench examples generate fmt lint lint-rust lint-all check all dev clean lib test-app
 
 # Default target
 help:
@@ -10,11 +10,10 @@ help:
 	@echo "  install    - Install the plugin to GOPATH/bin"
 	@echo "  test       - Run Go tests"
 	@echo "  test-rust  - Run Rust tests in examples"
-	@echo "  coverage   - Run Go tests with coverage"
-	@echo "  coverage-rust - Run Rust tests with coverage"
-	@echo "  bench      - Run Go benchmarks"
 	@echo "  examples   - Build and run the Rust examples"
 	@echo "  generate   - Generate Rust code from proto files"
+	@echo "  lib        - Build the as-lib library"
+	@echo "  test-app   - Build and run the test application"
 	@echo "  clean      - Clean build artifacts"
 	@echo "  fmt        - Format Go and Rust code"
 	@echo "  lint       - Run Go linter"
@@ -39,31 +38,37 @@ test:
 
 # Rust examples targets
 test-rust:
-	@echo "Running Rust tests..."
-	cd examples && cargo test
+	@echo "Running Rust tests in as-lib..."
+	cd examples/as-lib && cargo test
+	@echo "Running Rust tests in test-app..."
+	cd examples/test-app && cargo test
 
 examples: generate
-	@echo "Building and running Rust examples..."
-	cd examples && cargo run
+	@echo "Building as-lib example..."
+	cd examples/as-lib && cargo build
+	@echo "Running test-app example..."
+	cd examples/test-app && cargo run
 
 # Code generation
 generate: install
 	@echo "Generating Rust code from proto files..."
-	cd examples && rm -rf src/github.com && buf generate
+	cd examples/as-lib && rm -rf src/gen/ && buf generate
 
 # Cleaning
 clean:
 	@echo "Cleaning build artifacts..."
 	rm -f protoc-gen-rust-aip
-	cd examples && cargo clean
-	cd examples && rm -rf src/github.com target
+	cd examples/as-lib && cargo clean && rm -rf src/gen target
+	cd examples/test-app && cargo clean
 
 # Formatting
 fmt:
 	@echo "Formatting Go code..."
 	go fmt ./...
-	@echo "Formatting Rust code..."
-	cd examples && cargo fmt
+	@echo "Formatting Rust code in as-lib..."
+	cd examples/as-lib && cargo fmt
+	@echo "Formatting Rust code in test-app..."
+	cd examples/test-app && cargo fmt
 
 # Linting
 lint:
@@ -71,25 +76,12 @@ lint:
 	golangci-lint run ./... || echo "golangci-lint not installed, skipping Go linting"
 
 lint-rust:
-	@echo "Linting Rust code..."
-	cd examples && cargo clippy -- -D warnings || echo "cargo clippy failed or not available"
+	@echo "Linting Rust code in as-lib..."
+	cd examples/as-lib && cargo clippy -- -D warnings || echo "cargo clippy failed or not available"
+	@echo "Linting Rust code in test-app..."
+	cd examples/test-app && cargo clippy -- -D warnings || echo "cargo clippy failed or not available"
 
 lint-all: lint lint-rust
-
-# Coverage
-coverage:
-	@echo "Running Go tests with coverage..."
-	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
-	go tool cover -html=coverage.out -o coverage.html
-
-coverage-rust:
-	@echo "Running Rust tests with coverage..."
-	cd examples && cargo llvm-cov --all-features --workspace --lcov --output-path ../rust-coverage.lcov || echo "cargo-llvm-cov not available"
-
-# Benchmarks
-bench:
-	@echo "Running Go benchmarks..."
-	go test -bench=. -benchmem -run=^$ ./...
 
 # Cross-compilation
 build-all:
@@ -111,3 +103,12 @@ all: clean build install generate test test-rust examples
 # Development workflow
 dev: install generate test-rust examples
 	@echo "Development cycle complete!"
+
+# Library-specific targets
+lib: generate
+	@echo "Building the as-lib library..."
+	cd examples/as-lib && cargo build
+
+test-app: lib
+	@echo "Building and running the test application..."
+	cd examples/test-app && cargo run

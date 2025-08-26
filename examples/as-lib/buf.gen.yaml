@@ -1,0 +1,29 @@
+version: v2
+inputs:
+  - directory: proto
+plugins:
+  - remote: buf.build/community/neoeinstein-prost:v0.2.3
+    out: src/gen
+    opt:
+      - bytes=.
+      - compile_well_known_types
+      - extern_path=.google.protobuf=::pbjson_types
+      - file_descriptor_set
+  - remote: buf.build/community/neoeinstein-prost-serde:v0.2.3
+    out: src/gen
+  - remote: buf.build/community/neoeinstein-tonic:v0.3.0
+    out: src/gen
+    opt:
+      - compile_well_known_types
+      - extern_path=.google.protobuf=::pbjson_types
+  - local: protoc-gen-rust-aip
+    out: src/gen
+    opt:
+      paths=source_relative
+    strategy: all
+  - protoc_builtin: prost-crate
+    out: .
+    strategy: all
+    opt:
+      - include_file=src/gen/mod.rs
+      - gen_crate

@@ -30,7 +30,7 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sudo curl -sSL \"https://github.com/bufbuild/buf/releases/latest/download/buf-$(uname -s)-$(uname -m)\" -o /usr/local/bin/buf && sudo chmod +x /usr/local/bin/buf && buf --version && echo 'buf CLI installed successfully'",
+	"postCreateCommand": "sudo curl -sSL \"https://github.com/bufbuild/buf/releases/latest/download/buf-$(uname -s)-$(uname -m)\" -o /usr/local/bin/buf && sudo chmod +x /usr/local/bin/buf && buf --version && echo 'buf CLI installed successfully' && echo 'export PATH=\"/usr/local/go/bin:$HOME/go/bin:$PATH\"' >> ~/.bashrc && echo 'export PATH=\"/usr/local/go/bin:$HOME/go/bin:$PATH\"' >> ~/.zshrc",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
