@@ -13,3 +13,4 @@ use std::str::FromStr;
 
 include!("bookstore_aip.rs");
 include!("library_aip.rs");
+include!("optional_test_aip.rs");

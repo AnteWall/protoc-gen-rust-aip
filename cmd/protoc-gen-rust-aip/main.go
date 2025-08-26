@@ -8,6 +8,7 @@ import (
 
 	"github.com/AnteWall/protoc-gen-rust-aip/internal/genaip"
 	"google.golang.org/protobuf/compiler/protogen"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
 func main() {
@@ -27,6 +28,9 @@ func main() {
 	protogen.Options{
 		ParamFunc: flags.Set,
 	}.Run(func(plugin *protogen.Plugin) error {
+		// Declare support for proto3 optional feature
+		plugin.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
+		
 		return genaip.Run(plugin, genaip.Config{
 			IncludeResourceDefinitions: *includeResourceDefinitions,
 		})

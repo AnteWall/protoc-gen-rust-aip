@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package example.optional.v1;
+
+option go_package = "example/optional/v1";
+
+import "google/api/resource.proto";
+
+// A test resource with optional fields
+message TestResource {
+  option (google.api.resource) = {
+    type: "test.googleapis.com/TestResource"
+    pattern: "projects/{project}/tests/{test}"
+    singular: "test"
+    plural: "tests"
+  };
+
+  string name = 1;
+  optional string optional_field = 2;
+  optional int32 optional_number = 3;
+}
